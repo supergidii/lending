@@ -135,7 +135,7 @@ export default function BuyShares() {
                   </div>
                   <div className="ml-3">
                     <p className="text-sm font-medium text-green-800">
-                      Your lending amount has been successfully placed!
+                      Your lending amount has been successfully placed! kindly wait for the system to pair you with a borrower.
                     </p>
                   </div>
                 </div>

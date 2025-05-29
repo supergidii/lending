@@ -20553,3 +20553,122 @@ WARNING 2025-05-29 10:32:29,005 log 2688 1520 Not Found: /api/user/me/
 WARNING 2025-05-29 10:32:29,005 basehttp 2688 1520 "GET /api/user/me/ HTTP/1.1" 404 7145
 WARNING 2025-05-29 10:32:29,023 log 2688 1820 Not Found: /api/user/me/
 WARNING 2025-05-29 10:32:29,023 basehttp 2688 1820 "GET /api/user/me/ HTTP/1.1" 404 7145
+INFO 2025-05-29 13:31:28,175 basehttp 2688 16456 "OPTIONS /api/user-dashboard/ HTTP/1.1" 200 0
+INFO 2025-05-29 13:31:28,177 basehttp 2688 18748 "OPTIONS /api/user-dashboard/ HTTP/1.1" 200 0
+WARNING 2025-05-29 13:31:28,200 log 2688 18748 Unauthorized: /api/user-dashboard/
+WARNING 2025-05-29 13:31:28,201 basehttp 2688 18748 "GET /api/user-dashboard/ HTTP/1.1" 401 183
+WARNING 2025-05-29 13:31:28,206 log 2688 18748 Unauthorized: /api/user-dashboard/
+WARNING 2025-05-29 13:31:28,207 basehttp 2688 18748 "GET /api/user-dashboard/ HTTP/1.1" 401 183
+INFO 2025-05-29 13:31:34,550 basehttp 2688 18748 "OPTIONS /api/login/ HTTP/1.1" 200 0
+INFO 2025-05-29 13:31:36,385 basehttp 2688 18748 "POST /api/login/ HTTP/1.1" 200 626
+INFO 2025-05-29 13:31:36,767 basehttp 2688 18748 "GET /api/user-dashboard/ HTTP/1.1" 200 3463
+INFO 2025-05-29 13:31:36,827 basehttp 2688 16456 "GET /api/user-dashboard/ HTTP/1.1" 200 3463
+INFO 2025-05-29 13:31:37,947 basehttp 2688 18748 "OPTIONS /api/referrals/ HTTP/1.1" 200 0
+INFO 2025-05-29 13:31:37,949 basehttp 2688 16456 "OPTIONS /api/referrals/ HTTP/1.1" 200 0
+INFO 2025-05-29 13:31:38,016 basehttp 2688 16456 "GET /api/referrals/ HTTP/1.1" 200 3801
+INFO 2025-05-29 13:31:38,039 basehttp 2688 18748 "GET /api/referrals/ HTTP/1.1" 200 3801
+WARNING 2025-05-29 13:31:45,611 log 2688 18748 Unauthorized: /api/user-dashboard/
+WARNING 2025-05-29 13:31:45,612 basehttp 2688 18748 "GET /api/user-dashboard/ HTTP/1.1" 401 58
+WARNING 2025-05-29 13:31:45,648 log 2688 18748 Unauthorized: /api/user-dashboard/
+WARNING 2025-05-29 13:31:45,649 basehttp 2688 18748 "GET /api/user-dashboard/ HTTP/1.1" 401 58
+INFO 2025-05-29 13:31:49,652 basehttp 2688 18748 "GET /api/register/?ref=0D5BF9B7 HTTP/1.1" 200 52
+INFO 2025-05-29 13:31:49,671 basehttp 2688 16456 "GET /api/register/?ref=0D5BF9B7 HTTP/1.1" 200 52
+INFO 2025-05-29 13:32:34,093 basehttp 2688 16456 "OPTIONS /api/register/ HTTP/1.1" 200 0
+INFO 2025-05-29 13:32:36,494 basehttp 2688 16456 "POST /api/register/ HTTP/1.1" 201 632
+INFO 2025-05-29 13:32:54,880 basehttp 2688 16456 "POST /api/login/ HTTP/1.1" 200 632
+INFO 2025-05-29 13:32:55,084 basehttp 2688 16456 "GET /api/user-dashboard/ HTTP/1.1" 200 329
+INFO 2025-05-29 13:32:55,144 basehttp 2688 18748 "GET /api/user-dashboard/ HTTP/1.1" 200 329
+WARNING 2025-05-29 13:36:09,475 log 2688 18748 Unauthorized: /api/user-dashboard/
+WARNING 2025-05-29 13:36:09,476 basehttp 2688 18748 "GET /api/user-dashboard/ HTTP/1.1" 401 58
+WARNING 2025-05-29 13:36:09,516 log 2688 18748 Unauthorized: /api/user-dashboard/
+WARNING 2025-05-29 13:36:09,517 basehttp 2688 18748 "GET /api/user-dashboard/ HTTP/1.1" 401 58
+INFO 2025-05-29 13:36:19,984 basehttp 2688 18748 "POST /api/login/ HTTP/1.1" 200 626
+INFO 2025-05-29 13:36:20,185 basehttp 2688 18748 "GET /api/user-dashboard/ HTTP/1.1" 200 3571
+INFO 2025-05-29 13:36:20,261 basehttp 2688 16456 "GET /api/user-dashboard/ HTTP/1.1" 200 3571
+INFO 2025-05-29 13:36:32,037 basehttp 2688 16456 "GET /api/referrals/ HTTP/1.1" 200 4038
+INFO 2025-05-29 13:36:32,065 basehttp 2688 18748 "GET /api/referrals/ HTTP/1.1" 200 4038
+WARNING 2025-05-29 13:36:59,411 log 2688 18748 Unauthorized: /api/user-dashboard/
+WARNING 2025-05-29 13:36:59,415 basehttp 2688 18748 "GET /api/user-dashboard/ HTTP/1.1" 401 58
+WARNING 2025-05-29 13:36:59,453 log 2688 18748 Unauthorized: /api/user-dashboard/
+WARNING 2025-05-29 13:36:59,454 basehttp 2688 18748 "GET /api/user-dashboard/ HTTP/1.1" 401 58
+INFO 2025-05-29 13:37:05,811 basehttp 2688 18748 "POST /api/login/ HTTP/1.1" 200 632
+INFO 2025-05-29 13:37:05,952 basehttp 2688 18748 "GET /api/user-dashboard/ HTTP/1.1" 200 329
+INFO 2025-05-29 13:37:06,036 basehttp 2688 16456 "GET /api/user-dashboard/ HTTP/1.1" 200 329
+INFO 2025-05-29 13:37:09,106 basehttp 2688 16456 "GET /api/referrals/ HTTP/1.1" 200 102
+INFO 2025-05-29 13:37:09,134 basehttp 2688 18748 "GET /api/referrals/ HTTP/1.1" 200 102
+WARNING 2025-05-29 13:37:14,442 log 2688 18748 Unauthorized: /api/user-dashboard/
+WARNING 2025-05-29 13:37:14,443 basehttp 2688 18748 "GET /api/user-dashboard/ HTTP/1.1" 401 58
+WARNING 2025-05-29 13:37:14,472 log 2688 18748 Unauthorized: /api/user-dashboard/
+WARNING 2025-05-29 13:37:14,473 basehttp 2688 18748 "GET /api/user-dashboard/ HTTP/1.1" 401 58
+INFO 2025-05-29 13:37:41,204 basehttp 2688 18748 "GET /api/register/?ref=92D02308 HTTP/1.1" 200 53
+INFO 2025-05-29 13:37:41,219 basehttp 2688 16456 "GET /api/register/?ref=92D02308 HTTP/1.1" 200 53
+INFO 2025-05-29 13:38:44,492 basehttp 2688 16456 "POST /api/register/ HTTP/1.1" 201 632
+INFO 2025-05-29 13:39:00,858 basehttp 2688 16456 "POST /api/login/ HTTP/1.1" 200 632
+INFO 2025-05-29 13:39:01,072 basehttp 2688 16456 "GET /api/user-dashboard/ HTTP/1.1" 200 329
+INFO 2025-05-29 13:39:01,145 basehttp 2688 18748 "GET /api/user-dashboard/ HTTP/1.1" 200 329
+INFO 2025-05-29 13:47:38,578 basehttp 2688 12000 "OPTIONS /api/my_investments/ HTTP/1.1" 200 0
+INFO 2025-05-29 13:47:38,581 basehttp 2688 14236 "OPTIONS /api/my_investments/ HTTP/1.1" 200 0
+INFO 2025-05-29 13:47:38,592 basehttp 2688 14236 "GET /api/my_investments/ HTTP/1.1" 200 30
+INFO 2025-05-29 13:47:38,603 basehttp 2688 12000 "GET /api/my_investments/ HTTP/1.1" 200 30
+INFO 2025-05-29 13:47:40,441 basehttp 2688 19016 "OPTIONS /api/sell-shares/ HTTP/1.1" 200 0
+INFO 2025-05-29 13:47:40,455 basehttp 2688 16716 "OPTIONS /api/sell-shares/ HTTP/1.1" 200 0
+INFO 2025-05-29 13:47:40,535 basehttp 2688 19016 "GET /api/sell-shares/ HTTP/1.1" 200 11
+INFO 2025-05-29 13:47:40,548 basehttp 2688 16716 "GET /api/sell-shares/ HTTP/1.1" 200 11
+INFO 2025-05-29 13:52:43,684 basehttp 2688 8832 "OPTIONS /api/user/me/ HTTP/1.1" 200 0
+INFO 2025-05-29 13:52:43,689 basehttp 2688 8832 "OPTIONS /api/user/me/ HTTP/1.1" 200 0
+WARNING 2025-05-29 13:52:43,707 log 2688 8832 Not Found: /api/user/me/
+WARNING 2025-05-29 13:52:43,707 basehttp 2688 8832 "GET /api/user/me/ HTTP/1.1" 404 7145
+WARNING 2025-05-29 13:52:43,726 log 2688 5080 Not Found: /api/user/me/
+WARNING 2025-05-29 13:52:43,726 basehttp 2688 5080 "GET /api/user/me/ HTTP/1.1" 404 7145
+INFO 2025-05-29 16:25:16,902 basehttp 2688 19992 "OPTIONS /api/referrals/ HTTP/1.1" 200 0
+WARNING 2025-05-29 16:25:16,919 log 2688 19992 Unauthorized: /api/referrals/
+WARNING 2025-05-29 16:25:16,924 basehttp 2688 19992 "GET /api/referrals/ HTTP/1.1" 401 183
+INFO 2025-05-29 16:25:16,925 basehttp 2688 19996 "OPTIONS /api/referrals/ HTTP/1.1" 200 0
+WARNING 2025-05-29 16:25:16,929 log 2688 19996 Unauthorized: /api/referrals/
+WARNING 2025-05-29 16:25:16,930 basehttp 2688 19996 "GET /api/referrals/ HTTP/1.1" 401 183
+WARNING 2025-05-29 16:25:21,378 log 2688 19996 Unauthorized: /api/user-dashboard/
+WARNING 2025-05-29 16:25:21,378 basehttp 2688 19996 "GET /api/user-dashboard/ HTTP/1.1" 401 58
+WARNING 2025-05-29 16:25:21,383 log 2688 19996 Unauthorized: /api/user-dashboard/
+WARNING 2025-05-29 16:25:21,384 basehttp 2688 19996 "GET /api/user-dashboard/ HTTP/1.1" 401 58
+INFO 2025-05-29 16:25:24,561 basehttp 2688 19996 "OPTIONS /api/login/ HTTP/1.1" 200 0
+INFO 2025-05-29 16:25:24,973 basehttp 2688 19996 "POST /api/login/ HTTP/1.1" 200 632
+INFO 2025-05-29 16:25:25,022 basehttp 2688 19996 "OPTIONS /api/user-dashboard/ HTTP/1.1" 200 0
+INFO 2025-05-29 16:25:25,024 basehttp 2688 19992 "OPTIONS /api/user-dashboard/ HTTP/1.1" 200 0
+INFO 2025-05-29 16:25:25,069 basehttp 2688 19992 "GET /api/user-dashboard/ HTTP/1.1" 200 329
+INFO 2025-05-29 16:25:25,110 basehttp 2688 19996 "GET /api/user-dashboard/ HTTP/1.1" 200 329
+INFO 2025-05-29 16:25:27,957 basehttp 2688 19996 "GET /api/referrals/ HTTP/1.1" 200 102
+INFO 2025-05-29 16:25:27,975 basehttp 2688 19992 "GET /api/referrals/ HTTP/1.1" 200 102
+WARNING 2025-05-29 16:25:32,680 log 2688 19992 Unauthorized: /api/user-dashboard/
+WARNING 2025-05-29 16:25:32,681 basehttp 2688 19992 "GET /api/user-dashboard/ HTTP/1.1" 401 58
+WARNING 2025-05-29 16:25:32,686 log 2688 19992 Unauthorized: /api/user-dashboard/
+WARNING 2025-05-29 16:25:32,687 basehttp 2688 19992 "GET /api/user-dashboard/ HTTP/1.1" 401 58
+INFO 2025-05-29 16:25:37,712 basehttp 2688 19992 "POST /api/login/ HTTP/1.1" 200 626
+INFO 2025-05-29 16:25:37,969 basehttp 2688 19992 "GET /api/user-dashboard/ HTTP/1.1" 200 3571
+INFO 2025-05-29 16:25:38,008 basehttp 2688 19996 "GET /api/user-dashboard/ HTTP/1.1" 200 3571
+INFO 2025-05-29 16:25:50,642 basehttp 2688 19784 "OPTIONS /api/my_investments/ HTTP/1.1" 200 0
+INFO 2025-05-29 16:25:50,644 basehttp 2688 19780 "OPTIONS /api/my_investments/ HTTP/1.1" 200 0
+INFO 2025-05-29 16:25:50,657 basehttp 2688 19780 "GET /api/my_investments/ HTTP/1.1" 200 4435
+INFO 2025-05-29 16:25:50,673 basehttp 2688 19784 "GET /api/my_investments/ HTTP/1.1" 200 4435
+INFO 2025-05-29 16:25:51,793 basehttp 2688 19996 "OPTIONS /api/sell-shares/ HTTP/1.1" 200 0
+INFO 2025-05-29 16:25:51,795 basehttp 2688 19992 "OPTIONS /api/sell-shares/ HTTP/1.1" 200 0
+INFO 2025-05-29 16:25:51,894 basehttp 2688 19996 "GET /api/sell-shares/ HTTP/1.1" 200 4754
+INFO 2025-05-29 16:25:51,904 basehttp 2688 19992 "GET /api/sell-shares/ HTTP/1.1" 200 4754
+INFO 2025-05-29 16:25:54,360 basehttp 2688 19784 "GET /api/my_investments/ HTTP/1.1" 200 4435
+INFO 2025-05-29 16:25:54,380 basehttp 2688 19780 "GET /api/my_investments/ HTTP/1.1" 200 4435
+WARNING 2025-05-29 16:27:17,212 log 2688 19992 Unauthorized: /api/user-dashboard/
+WARNING 2025-05-29 16:27:17,212 basehttp 2688 19992 "GET /api/user-dashboard/ HTTP/1.1" 401 58
+WARNING 2025-05-29 16:27:17,216 log 2688 19992 Unauthorized: /api/user-dashboard/
+WARNING 2025-05-29 16:27:17,217 basehttp 2688 19992 "GET /api/user-dashboard/ HTTP/1.1" 401 58
+INFO 2025-05-29 16:27:22,414 basehttp 2688 19992 "POST /api/login/ HTTP/1.1" 200 628
+INFO 2025-05-29 16:27:22,510 basehttp 2688 19992 "GET /api/user-dashboard/ HTTP/1.1" 200 1158
+INFO 2025-05-29 16:27:22,559 basehttp 2688 19996 "GET /api/user-dashboard/ HTTP/1.1" 200 1158
+INFO 2025-05-29 16:27:32,922 basehttp 2688 19780 "GET /api/my_investments/ HTTP/1.1" 200 2472
+INFO 2025-05-29 16:27:32,941 basehttp 2688 19784 "GET /api/my_investments/ HTTP/1.1" 200 2472
+INFO 2025-05-29 16:33:19,899 basehttp 2688 18940 "GET /api/my_investments/ HTTP/1.1" 200 2472
+INFO 2025-05-29 16:35:09,426 basehttp 2688 17972 "GET /api/user-dashboard/ HTTP/1.1" 200 1158
+INFO 2025-05-29 16:35:09,467 basehttp 2688 18636 "GET /api/user-dashboard/ HTTP/1.1" 200 1158
+INFO 2025-05-29 16:35:29,491 basehttp 2688 18636 "OPTIONS /api/investments/create/ HTTP/1.1" 200 0
+INFO 2025-05-29 16:35:29,657 basehttp 2688 18636 "POST /api/investments/create/ HTTP/1.1" 201 191
+INFO 2025-05-29 16:35:39,148 basehttp 2688 18940 "GET /api/my_investments/ HTTP/1.1" 200 2649
+INFO 2025-05-29 16:35:39,161 basehttp 2688 18940 "GET /api/my_investments/ HTTP/1.1" 200 2649
+INFO 2025-05-29 16:36:40,321 basehttp 2688 18636 "POST /api/investments/create/ HTTP/1.1" 201 191

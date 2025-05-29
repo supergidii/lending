@@ -20,7 +20,7 @@ const CountdownTimer = ({ maturedAt, status }) => {
         const calculateTimeLeft = () => {
             if (!maturedAt) {
                 console.log('No maturity date provided');
-                setTimeLeft('the system is runing pairing');
+                setTimeLeft('Waiting for payment confirmation. Please ensure your payment is complete.');
                 return;
             }
 
