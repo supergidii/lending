@@ -31,7 +31,7 @@ export default function StatCards({ data }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div className="bg-white p-6 rounded-lg shadow-sm">
-        <h3 className="text-lg font-medium text-gray-700">Unused Referral Earnings</h3>
+        <h3 className="text-lg font-medium text-gray-700">Total Referral Earnings</h3>
         <p className="text-4xl font-bold mt-2">{formatAmount(totalReferralEarnings)}</p>
         <p className="text-sm text-gray-500 mt-1">From {totalReferrals} referrals</p>
       </div>

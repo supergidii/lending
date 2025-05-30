@@ -11,4 +11,5 @@ whitenoise==6.6.0
 django-filter==23.3
 django-storages==1.14.2
 boto3==1.28.64
-psycopg2-binary==2.9.9 
+psycopg2-binary==2.9.9
+dj-database-url==2.1.0 

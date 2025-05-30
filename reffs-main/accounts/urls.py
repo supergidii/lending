@@ -7,7 +7,9 @@ from .views import (
     ReferralStatementPDFView, system_overview, user_dashboard,
     DashboardView, BuySharesView, SellSharesView, ReferralsView,
     CustomLoginView, CustomLogoutView, MyInvestmentsView, sell_shares,
-    my_investments, confirm_payment
+    my_investments, ConfirmPaymentView, InvestmentDetailView,
+    WithdrawBonusView, WithdrawHistoryListView, WithdrawHistoryDetailView,
+    WithdrawHistoryCreateView, WithdrawHistoryUpdateView, WithdrawHistoryDeleteView
 )
 
 urlpatterns = [
@@ -20,11 +22,13 @@ urlpatterns = [
     # Investment endpoints
     path('investments/create/', InvestmentCreateView.as_view(), name='investment_create'),
     path('investments/', InvestmentListView.as_view(), name='investment_list'),
+    path('investments/<int:pk>/', InvestmentDetailView.as_view(), name='investment_detail'),
+    path('confirm-payment/<int:investment_id>/', ConfirmPaymentView.as_view(), name='confirm_payment'),
     path('my_investments/', my_investments, name='api_my_investments'),
     
     # Referral endpoints
-    path('referrals/', ReferralHistoryListView.as_view(), name='api_referrals'),
-    path('referrals/history/', ReferralHistoryListView.as_view(), name='referral_list'),
+    path('referrals/', ReferralHistoryListView.as_view(), name='referral_list'),
+    path('referrals/history/', ReferralHistoryListView.as_view(), name='referral_history'),
 
     # Statement PDF endpoints
     path('investments/<int:investment_id>/statement/', InvestmentStatementPDFView.as_view(), name='investment_statement_pdf'),
@@ -47,5 +51,10 @@ urlpatterns = [
     path('my-investments/', MyInvestmentsView.as_view(), name='my_investments'),
     path('auth/login/', CustomLoginView.as_view(), name='login'),
     path('auth/logout/', CustomLogoutView.as_view(), name='logout'),
-    path('confirm-payment/<int:payment_id>/', confirm_payment, name='confirm_payment'),
+    path('withdraw-bonus/', WithdrawBonusView.as_view(), name='withdraw_bonus'),
+    path('withdraw-history/', WithdrawHistoryListView.as_view(), name='withdraw_history_list'),
+    path('withdraw-history/<int:pk>/', WithdrawHistoryDetailView.as_view(), name='withdraw_history_detail'),
+    path('withdraw-history/create/', WithdrawHistoryCreateView.as_view(), name='withdraw_history_create'),
+    path('withdraw-history/<int:pk>/update/', WithdrawHistoryUpdateView.as_view(), name='withdraw_history_update'),
+    path('withdraw-history/<int:pk>/delete/', WithdrawHistoryDeleteView.as_view(), name='withdraw_history_delete'),
 ] 

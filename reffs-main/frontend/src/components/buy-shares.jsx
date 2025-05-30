@@ -10,11 +10,12 @@ import { Button } from "./ui/button"
 import api from "../services/api"
 import { formatCurrency } from "../utils/formatters"
 import Navbar from './navbar'
+import { toast } from 'react-hot-toast'
 
 export default function BuyShares() {
   const [formData, setFormData] = useState({
     amount: '',
-    maturityPeriod: '5' // Default to 30 days
+    maturityPeriod: '5' // Set correct default value
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -23,12 +24,12 @@ export default function BuyShares() {
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    // Allow only numbers
-    if (/^\d*$/.test(value)) {
-      setError(null)
-    } else {
+    // Allow only numbers and one decimal point
+    if (name === 'amount' && !/^\d*\.?\d*$/.test(value)) {
       setError('Please enter a valid number')
+      return
     }
+    setError(null)
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -41,28 +42,47 @@ export default function BuyShares() {
     setError(null)
     setSuccess(false)
 
-    // Validate minimum amount
-    if (parseFloat(formData.amount) < 100) {
+    // Validate amount
+    const amount = parseFloat(formData.amount)
+    if (isNaN(amount) || amount < 100) {
       setError('Minimum loan bid amount is Ksh 100')
+      setLoading(false)
+      return
+    }
+    if (amount > 30000) {
+      setError('Maximum loan bid amount is Ksh 30,000')
       setLoading(false)
       return
     }
 
     try {
-      const response = await api.post('/api/investments/create/', {
-        amount: parseFloat(formData.amount),
+      const investmentData = {
+        amount: amount,
         maturity_period: parseInt(formData.maturityPeriod)
-      })
+      }
+      console.log('Submitting loan bid:', investmentData)
+
+      const response = await api.post('/api/investments/create/', investmentData)
+      console.log('Loan bid response:', response.data)
 
       if (response.data) {
         setSuccess(true)
-        setFormData({ amount: '', maturityPeriod: '30' })
+        setFormData({ amount: '', maturityPeriod: '5' })
         // Show success message
-        alert('Loan bid placed successfully!')
+        toast.success('Loan bid placed successfully!')
+        // Redirect to dashboard after a short delay
+        setTimeout(() => {
+          window.location.href = '/dashboard'
+        }, 2000)
       }
     } catch (error) {
-      console.error('Error creating loan bid:', error)
-      setError(error.response?.data?.error || 'Failed to create loan bid')
+      console.error('Error creating investment:', error)
+      console.error('Error response:', error.response?.data)
+      const errorMessage = error.response?.data?.error || 
+                         error.response?.data?.detail || 
+                         'Failed to create loan bid. Please try again.'
+      setError(errorMessage)
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -74,7 +94,9 @@ export default function BuyShares() {
     const days = parseInt(formData.maturityPeriod) || 0
     const dailyInterest = 0.02 // 2% daily interest
     const interest = amount * dailyInterest * days
-    return amount + interest
+    const totalReturn = amount + interest
+    // Round down to 2 decimal places
+    return Math.floor(totalReturn * 100) / 100
   }
 
   useEffect(() => {
@@ -86,8 +108,8 @@ export default function BuyShares() {
 
       const morningStart = 9 * 60 + 30; // 9:30 AM
       const morningEnd = 11 * 60 + 30; // 11:30 AM
-      const eveningStart = 16 * 60; // 4:00 PM
-      const eveningEnd = 18 * 60; // 6:00 PM
+      const eveningStart = 13 * 60; // 4:00 PM
+      const eveningEnd = 24 * 60; // 6:00 PM
 
       const isMorningSlot = currentTime >= morningStart && currentTime <= morningEnd;
       const isEveningSlot = currentTime >= eveningStart && currentTime <= eveningEnd;
@@ -123,7 +145,22 @@ export default function BuyShares() {
           </div>
         ) : (
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-6">Place Your Bid</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-6">Place Your Loan Bid</h1>
+
+            {error && (
+              <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <AlertCircle className="h-5 w-5 text-red-400" />
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-red-800">
+                      {error}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {success && (
               <div className="mb-6 bg-green-50 border border-green-200 rounded-md p-4">
@@ -135,7 +172,7 @@ export default function BuyShares() {
                   </div>
                   <div className="ml-3">
                     <p className="text-sm font-medium text-green-800">
-                      Your lending amount has been successfully placed! kindly wait for the system to pair you with a borrower.
+                      Your loan bid has been successfully placed! Please wait for the system to process your bid.
                     </p>
                   </div>
                 </div>
@@ -155,7 +192,7 @@ export default function BuyShares() {
                         <DollarSign className="h-5 w-5 text-gray-400" />
                       </div>
                       <input
-                        type="text"
+                        type="number"
                         id="amount"
                         name="amount"
                         value={formData.amount}
@@ -163,15 +200,12 @@ export default function BuyShares() {
                         className={`block w-full pl-10 pr-3 py-2 border ${
                           error ? 'border-red-300' : 'border-gray-300'
                         } rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
-                        placeholder="Enter amount (min. 100)"
+                        placeholder="Enter amount (min. 100, max. 30,000)"
+                        min="100"
+                        max="30000"
+                        step="0.01"
                       />
                     </div>
-                    {error && (
-                      <p className="mt-2 text-sm text-red-600 flex items-center">
-                        <AlertCircle className="h-4 w-4 mr-1" />
-                        {error}
-                      </p>
-                    )}
                   </div>
 
                   <div>
@@ -193,7 +227,7 @@ export default function BuyShares() {
                         <option value="10">10 Days</option>
                         <option value="20">20 Days</option>
                         <option value="30">30 Days</option>
-                        <option value="40">40 Days</option>
+                        <option value="60">60 Days</option>
                       </select>
                     </div>
                   </div>

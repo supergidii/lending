@@ -1,6 +1,6 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { ChevronDown, User, LogOut, Menu, X, LayoutDashboard, Scale, Handshake, Wallet, MessageCircle, NetworkIcon, GiftIcon, Link2Icon, TrendingUp, HelpCircle } from "lucide-react"
+import { ChevronDown, User, LogOut, Menu, X, LayoutDashboard, Scale, Handshake, Wallet, MessageCircle, NetworkIcon, GiftIcon, Link2Icon, TrendingUp, HelpCircle, ClipboardCheck } from "lucide-react"
 import { authService } from "../services/api"
 import { useAuth } from "../contexts/AuthContext"
 
@@ -8,6 +8,13 @@ export default function Navbar() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  useEffect(() => {
+    // Debug user data
+    console.log('Current user data:', user);
+    console.log('Is staff:', user?.is_staff);
+    console.log('Is admin:', user?.is_admin);
+  }, [user]);
 
   const onLogout = () => {
     authService.logout()
@@ -36,6 +43,7 @@ export default function Navbar() {
     { to: "/donations/", label: "Donations", icon: <GiftIcon className="h-5 w-5" /> },
     { to: "/social/", label: "Social Network", icon: <Link2Icon className="h-5 w-5" /> },
     { to: "/how-it-works/", label: "How It Works", icon: <HelpCircle className="h-5 w-5" /> },
+    ...((user?.is_staff || user?.is_superuser) ? [{ to: "/audit/", label: "Audit", icon: <ClipboardCheck className="h-5 w-5" /> }] : []),
   ]
 
   const renderNavLinks = () => (

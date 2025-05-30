@@ -139,6 +139,13 @@
                                 <i class="fas fa-users me-1"></i> Referrals
                             </a>
                         </li>
+                        {% if user.is_staff %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'audit' %}">
+                                <i class="fas fa-clipboard-list me-1"></i> Audit
+                            </a>
+                        </li>
+                        {% endif %}
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
                                 <i class="fas fa-user-circle me-1"></i> {{ user.username }}

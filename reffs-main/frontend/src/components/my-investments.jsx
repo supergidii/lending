@@ -254,7 +254,7 @@ const MyInvestments = () => {
                                 ) : (
                                     <TableRow>
                                         <TableCell colSpan={6} className="text-center">
-                                            No investments found
+                                            No loan to trade found
                                         </TableCell>
                                     </TableRow>
                                 )}

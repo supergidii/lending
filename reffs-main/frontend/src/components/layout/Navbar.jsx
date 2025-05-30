@@ -1,9 +1,10 @@
 import React from 'react';
-import { LayoutDashboard, Scale, Handshake, Wallet, MessageCircle } from 'lucide-react';
+import { LayoutDashboard, Scale, Handshake, Wallet, MessageCircle, ClipboardList } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 const Navbar = () => {
   const location = useLocation();
+  const isAdmin = localStorage.getItem('is_staff') === 'true';
 
   const navigationItems = [
     { name: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" />, path: '/dashboard' },
@@ -12,6 +13,15 @@ const Navbar = () => {
     { name: 'My Wallet', icon: <Wallet className="h-5 w-5" />, path: '/wallet' },
     { name: 'Support', icon: <MessageCircle className="h-5 w-5" />, path: '/support' },
   ];
+
+  // Add Audit link for admin users
+  if (isAdmin) {
+    navigationItems.push({
+      name: 'Audit',
+      icon: <ClipboardList className="h-5 w-5" />,
+      path: '/audit'
+    });
+  }
 
   return (
     <nav className="bg-white shadow-sm">

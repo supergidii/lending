@@ -99,15 +99,6 @@ def process_referral_bonus(investment_id):
             referrer.referral_earnings += bonus_amount
             referrer.save()
             
-            # Create referral history entry
-            ReferralHistory.objects.create(
-                referrer=referrer,
-                referred=user,
-                amount_invested=investment.amount,
-                bonus_earned=bonus_amount,
-                status='pending'
-            )
-            
             # Send notification
             send_referral_bonus_notification.delay(referrer.id, investment.id, float(bonus_amount))
             
@@ -230,7 +221,9 @@ def run_pairing_job(**kwargs):
         for matured in matured_investments:
             # Initialize remaining_amount from return_amount if not set
             if matured.remaining_amount is None:
-                matured.remaining_amount = matured.return_amount or matured.amount
+                remaining = matured.return_amount or matured.amount
+                # Round down to 2 decimal places
+                matured.remaining_amount = Decimal(str(round(float(remaining), 2)))
                 matured.save()
             
             remaining_amount = matured.remaining_amount

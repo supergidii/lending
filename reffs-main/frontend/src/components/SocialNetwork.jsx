@@ -16,58 +16,30 @@ const SocialNetwork = () => {
     {
       name: 'WhatsApp',
       icon: <MessageCircle className="h-6 w-6" />,
-      url: 'https://wa.me/your_whatsapp_number',
+      url: 'https://chat.whatsapp.com/Lcwkabr5VI3C1syYJxqrEC',
       username: 'Join our WhatsApp Group'
     },
     {
       name: 'Telegram',
       icon: <MessageCircle className="h-6 w-6" />,
-      url: 'https://t.me/your_telegram_channel',
+      url: 'https://t.me/+7Dm4wOE-VVc5N2Nk',
       username: 'Join our Telegram Channel'
     },
-    {
-      name: 'Facebook',
-      icon: <Facebook className="h-6 w-6" />,
-      url: 'https://facebook.com/reffs',
-      username: '@reffs'
-    },
-    {
-      name: 'Twitter',
-      icon: <Twitter className="h-6 w-6" />,
-      url: 'https://twitter.com/reffs',
-      username: '@reffs'
-    },
-    {
-      name: 'Instagram',
-      icon: <Instagram className="h-6 w-6" />,
-      url: 'https://instagram.com/reffs',
-      username: '@reffs'
-    },
-    {
-      name: 'LinkedIn',
-      icon: <Linkedin className="h-6 w-6" />,
-      url: 'https://linkedin.com/company/reffs',
-      username: 'Reffs'
-    }
+  
   ];
 
   const supportContacts = [
     {
       type: 'WhatsApp',
       icon: <MessageCircle className="h-6 w-6" />,
-      number: '+254 123 456 789',
+      number: '+254 103028802',
       username: 'Reffs Support'
     },
-    {
-      type: 'Phone',
-      icon: <Phone className="h-6 w-6" />,
-      number: '+254 123 456 789',
-      username: 'Support Line'
-    },
+   
     {
       type: 'Email',
       icon: <Mail className="h-6 w-6" />,
-      number: 'support@reffs.com',
+      number: 'lendhive@gmail.com',
       username: 'Support Email'
     }
   ];

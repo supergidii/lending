@@ -6,24 +6,32 @@ from django.dispatch import receiver
 from decimal import Decimal
 import uuid
 from datetime import timedelta
+import random
+import string
 
 class User(AbstractUser):
-    phone_number = models.CharField(max_length=20, unique=True)
-    referral_code = models.CharField(max_length=20, unique=True, blank=True)
+    phone_number = models.CharField(max_length=15, unique=True)
+    referral_code = models.CharField(max_length=10, unique=True, null=True, blank=True)
     referred_by = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='referrals')
     referral_earnings = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     is_banned = models.BooleanField(default=False)
-    ban_reason = models.TextField(blank=True, null=True)
+    ban_reason = models.TextField(null=True, blank=True)
     banned_at = models.DateTimeField(null=True, blank=True)
+    country = models.CharField(max_length=100, null=True, blank=True)
 
     USERNAME_FIELD = 'phone_number'
     REQUIRED_FIELDS = ['username', 'email']
 
     def save(self, *args, **kwargs):
         if not self.referral_code:
-            # Generate a unique referral code
-            self.referral_code = str(uuid.uuid4())[:8].upper()
+            self.referral_code = self.generate_referral_code()
         super().save(*args, **kwargs)
+
+    def generate_referral_code(self):
+        while True:
+            code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+            if not User.objects.filter(referral_code=code).exists():
+                return code
 
     def __str__(self):
         return self.username
@@ -102,7 +110,8 @@ class Investment(models.Model):
         days_to_maturity = (self.maturity_date - self.created_at).days
         interest_amount = self.amount * daily_interest * days_to_maturity
         total_return = self.amount + interest_amount + self.referral_bonus_used
-        return total_return
+        # Round down to 2 decimal places
+        return Decimal(str(round(float(total_return), 2)))
 
     def update_payment(self, amount_paid, payment_method=None, notes=None):
         """Update payment status and amounts"""
@@ -275,4 +284,47 @@ class Payment(models.Model):
         self.status = 'rejected'
         self.rejected_at = timezone.now()
         self.rejection_reason = reason
+        self.save()
+
+class WithdrawHistory(models.Model):
+    """
+    Model to track withdrawal history of referral bonuses
+    """
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+        ('completed', 'Completed')
+    )
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='withdrawals')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+    notes = models.TextField(blank=True, null=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Withdrawal History'
+        verbose_name_plural = 'Withdrawal Histories'
+
+    def __str__(self):
+        return f"{self.user.username} - {self.amount} - {self.status}"
+
+    def approve(self):
+        self.status = 'approved'
+        self.processed_at = timezone.now()
+        self.save()
+
+    def reject(self, reason=None):
+        self.status = 'rejected'
+        self.processed_at = timezone.now()
+        if reason:
+            self.notes = reason
+        self.save()
+
+    def complete(self):
+        self.status = 'completed'
+        self.processed_at = timezone.now()
         self.save()

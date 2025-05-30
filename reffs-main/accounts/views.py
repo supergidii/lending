@@ -19,12 +19,13 @@ from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from .serializers import (
     UserRegistrationSerializer, UserLoginSerializer, UserSerializer,
-    InvestmentSerializer, ReferralHistorySerializer, PairedInvestmentSerializer
+    InvestmentSerializer, ReferralHistorySerializer, PairedInvestmentSerializer,
+    WithdrawHistorySerializer
 )
-from .models import User, Investment, ReferralHistory,PairedInvestment,Payment
+from .models import User, Investment, ReferralHistory,PairedInvestment,Payment, WithdrawHistory
 from django.views.generic import TemplateView
 from django.contrib.auth.views import LoginView, LogoutView
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
 from django.db.models import Sum, Count, Avg, Q
 import traceback
@@ -126,17 +127,6 @@ class UserRegistrationView(generics.CreateAPIView):
                     user = serializer.save()
                     print("User created successfully:", user.username)
                     
-                    # If user was referred, create a referral history entry
-                    if referred_by:
-                        ReferralHistory.objects.create(
-                            referrer=referred_by,
-                            referred=user,
-                            amount_invested=0,
-                            bonus_earned=0,
-                            status='pending'
-                        )
-                        print(f"Created referral history for {user.username}")
-                    
                     refresh = RefreshToken.for_user(user)
                     response_data = {
                         'user': UserSerializer(user).data,
@@ -221,110 +211,48 @@ class InvestmentCreateView(generics.CreateAPIView):
                 'banned_at': request.user.banned_at
             }, status=status.HTTP_403_FORBIDDEN)
         
-        serializer = self.get_serializer(data=request.data)
-        if not serializer.is_valid():
-            print("Serializer validation errors:", serializer.errors)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
         try:
-            user = request.user
-            amount = serializer.validated_data['amount']
-            maturity_period = serializer.validated_data['maturity_period']
-            print(f"Amount: {amount}, Maturity Period: {maturity_period}")
+            serializer = self.get_serializer(data=request.data)
+            if not serializer.is_valid():
+                print("Serializer validation errors:", serializer.errors)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            # Calculate return amount (2% per day)
-            daily_interest_rate = Decimal('0.02')
-            interest_amount = amount * daily_interest_rate * maturity_period
-            return_amount = amount + interest_amount
-            remaining_amount = return_amount
-            referral_bonus_used = Decimal('0')
-            print(f"Calculated return amount: {return_amount}")
+            try:
+                investment = serializer.save()
 
-            # Calculate maturity date
-            maturity_date = timezone.now() + timedelta(days=maturity_period)
-            print(f"Maturity date: {maturity_date}")
+                # Calculate total investment after creating new investment
+                total_investment = Investment.objects.filter(user=request.user).aggregate(
+                    total=Sum('amount')
+                )['total'] or Decimal('0.00')
 
-            # Check and apply referral bonus if available
-            if user.referral_earnings > 0 and amount >= user.referral_earnings:
-                print(f"Applying referral bonus: {user.referral_earnings}")
-                referral_bonus_used = user.referral_earnings
-                return_amount += referral_bonus_used
-                remaining_amount += referral_bonus_used
+                response_data = {
+                    'id': investment.id,
+                    'amount': investment.amount,
+                    'remn_amount':investment.amount,
+                    'return_amount': investment.return_amount,
+                    'remaining_amount': investment.return_amount,
+                    'maturity_date': investment.maturity_date,
+                    'referral_bonus_applied': investment.referral_bonus_used,
+                    'message': 'Investment created successfully',
+                    'total_investment': total_investment
+                }
+
+                return Response(response_data, status=status.HTTP_201_CREATED)
                 
-                # Update referral history records
-                referral_histories = ReferralHistory.objects.filter(
-                    referrer=user,
-                    status='pending'
-                ).order_by('created_at')
-
-                remaining_bonus = referral_bonus_used
-                for history in referral_histories:
-                    if remaining_bonus <= 0:
-                        break
-                    
-                    if history.bonus_earned <= remaining_bonus:
-                        history.status = 'used'
-                        history.used_at = timezone.now()
-                        history.save()
-                        remaining_bonus -= history.bonus_earned
-                    else:
-                        # Split the history record
-                        used_amount = remaining_bonus
-                        ReferralHistory.objects.create(
-                            referrer=history.referrer,
-                            referred=history.referred,
-                            amount_invested=history.amount_invested * (used_amount / history.bonus_earned),
-                            bonus_earned=used_amount,
-                            status='used',
-                            used_at=timezone.now()
-                        )
-                        history.amount_invested = history.amount_invested * ((history.bonus_earned - used_amount) / history.bonus_earned)
-                        history.bonus_earned -= used_amount
-                        history.save()
-                        remaining_bonus = 0
-
-                # Reset user's referral earnings
-                user.referral_earnings = 0
-                user.save()
-
-            # Create investment
-            print("Creating investment...")
-            investment = Investment.objects.create(
-                user=user,
-                amount=amount,
-                remn_amount=amount,
-                maturity_date=maturity_date,
-                maturity_period=maturity_period,
-                status='pending',
-                return_amount=return_amount,
-                remaining_amount=remaining_amount,
-                referral_bonus_used=referral_bonus_used
-            )
-            print(f"Investment created successfully with ID: {investment.id}")
-
-            # Calculate total investment after creating new investment
-            total_investment = Investment.objects.filter(user=user).aggregate(
-                total=Sum('amount')
-            )['total'] or Decimal('0.00')
-
-            response_data = {
-                'id': investment.id,
-                'amount': amount,
-                'return_amount': return_amount,
-                'maturity_date': maturity_date,
-                'referral_bonus_applied': referral_bonus_used,
-                'message': 'Investment created successfully',
-                'total_investment': total_investment
-            }
-
-            return Response(response_data, status=status.HTTP_201_CREATED)
-            
+            except Exception as e:
+                print("Error in serializer.save():", str(e))
+                print("Error type:", type(e).__name__)
+                print("Traceback:", traceback.format_exc())
+                return Response({
+                    'error': f'Failed to create investment: {str(e)}'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
         except Exception as e:
-            print("Error creating investment:", str(e))
+            print("Error in create method:", str(e))
             print("Error type:", type(e).__name__)
             print("Traceback:", traceback.format_exc())
             return Response({
-                'error': f'Failed to create investment: {str(e)}'
+                'error': f'Failed to process investment creation: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class InvestmentListView(generics.ListAPIView):
@@ -358,8 +286,11 @@ class ReferralHistoryListView(generics.ListAPIView):
         # Calculate statistics
         total_referrals = User.objects.filter(referred_by=request.user).count()
         total_earnings = queryset.aggregate(total=Sum('bonus_earned'))['total'] or 0
-        available_bonus = queryset.filter(
-            status='pending',
+        
+        # Calculate available bonus from active referral histories
+        available_bonus = ReferralHistory.objects.filter(
+            referrer=request.user,
+            status='active',
             payment_confirmed=True
         ).aggregate(total=Sum('bonus_earned'))['total'] or 0
         
@@ -384,97 +315,98 @@ class ReferralHistoryListView(generics.ListAPIView):
         
         return Response(response_data)
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def confirm_payment(request, payment_id):
-    """Confirm a payment for a paired investment"""
-    try:
-        paired_investment = PairedInvestment.objects.get(id=payment_id)
-        
-        # Get the new investment using the pairing reference
-        new_investment = Investment.objects.filter(
-            pairing_reference=paired_investment.pairing_reference,
-            user=paired_investment.new_investor
-        ).first()
-        
-        if not new_investment:
-            return Response({
-                'error': 'Associated investment not found'
-            }, status=status.HTTP_404_NOT_FOUND)
-        
-        # Update the paired investment status
-        paired_investment.status = 'confirmed'
-        paired_investment.payment_status = 'paid'
-        paired_investment.confirmed_at = timezone.now()
-        paired_investment.save()
-        
-        # Calculate total amount paired so far
-        total_paired = PairedInvestment.objects.filter(
-            pairing_reference=paired_investment.pairing_reference,
-            status='confirmed',
-            payment_status='paid'
-        ).aggregate(total=Sum('amount_paired'))['total'] or Decimal('0.00')
-        
-        # Update remaining amount based on total paired amount
-        new_investment.remn_amount = max(Decimal('0.00'), new_investment.amount - total_paired)
-        new_investment.save()
-        
-        # Check if all paired investments are confirmed
-        all_paired = PairedInvestment.objects.filter(
-            pairing_reference=paired_investment.pairing_reference
-        )
-        all_confirmed = all_paired.exists() and all(
-            pi.status == 'confirmed' and pi.payment_status == 'paid' for pi in all_paired
-        )
-        
-        # Only confirm the investment if all paired investments are confirmed AND remaining amount is 0
-        if all_confirmed and new_investment.remn_amount == Decimal('0.00'):
-            # Update the new investor's investment status
-            new_investment.is_confirmed = True
-            new_investment.confirmed_at = timezone.now()
-            new_investment.status = 'confirmed'
+class ConfirmPaymentView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, investment_id):
+        try:
+            paired_investment = PairedInvestment.objects.get(id=investment_id)
+            
+            # Get the new investment using the pairing reference
+            new_investment = Investment.objects.filter(
+                pairing_reference=paired_investment.pairing_reference,
+                user=paired_investment.new_investor
+            ).first()
+            
+            if not new_investment:
+                return Response({
+                    'error': 'Associated investment not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Update the paired investment status
+            paired_investment.status = 'confirmed'
+            paired_investment.payment_status = 'paid'
+            paired_investment.confirmed_at = timezone.now()
+            paired_investment.save()
+            
+            # Calculate total amount paired so far
+            total_paired = PairedInvestment.objects.filter(
+                pairing_reference=paired_investment.pairing_reference,
+                status='confirmed',
+                payment_status='paid'
+            ).aggregate(total=Sum('amount_paired'))['total'] or Decimal('0.00')
+            
+            # Update remaining amount based on total paired amount
+            new_investment.remn_amount = max(Decimal('0.00'), new_investment.amount - total_paired)
             new_investment.save()
             
-            # Start the countdown for the new investment
-            new_investment.start_countdown()
-            
-            # Update referral history for all referrers
-            referral_histories = ReferralHistory.objects.filter(
-                referred=new_investment.user,
-                payment_confirmed=False
+            # Check if all paired investments are confirmed
+            all_paired = PairedInvestment.objects.filter(
+                pairing_reference=paired_investment.pairing_reference
             )
-            for history in referral_histories:
-                history.payment_confirmed = True
-                history.payment_confirmed_at = timezone.now()
-                history.save()
+            all_confirmed = all_paired.exists() and all(
+                pi.status == 'confirmed' and pi.payment_status == 'paid' for pi in all_paired
+            )
+            
+            # Only confirm the investment if all paired investments are confirmed AND remaining amount is 0
+            if all_confirmed and new_investment.remn_amount == Decimal('0.00'):
+                # Update the new investor's investment status
+                new_investment.is_confirmed = True
+                new_investment.confirmed_at = timezone.now()
+                new_investment.status = 'confirmed'
+                new_investment.save()
                 
-                # Update referrer's available bonus
-                referrer = history.referrer
-                referrer.referral_earnings += history.bonus_earned
-                referrer.save()
-            
+                # Start the countdown for the new investment
+                new_investment.start_countdown()
+                
+                # Update referral history for all referrers and make bonus available
+                referral_histories = ReferralHistory.objects.filter(
+                    referred=new_investment.user,
+                    payment_confirmed=False
+                )
+                for history in referral_histories:
+                    history.payment_confirmed = True
+                    history.payment_confirmed_at = timezone.now()
+                    history.status = 'active'
+                    history.save()
+                    
+                    # Update referrer's available bonus
+                    referrer = history.referrer
+                    referrer.referral_earnings += history.bonus_earned
+                    referrer.save()
+                
+                return Response({
+                    'success': True,
+                    'message': 'Payment confirmed and investment confirmed. Referral bonus is now available.',
+                    'all_confirmed': True,
+                    'mature_at': new_investment.mature_at
+                })
+            else:
+                return Response({
+                    'success': True,
+                    'message': 'Payment confirmed but waiting for all payments and remaining amount to be cleared',
+                    'all_confirmed': False,
+                    'remaining_amount': str(new_investment.remn_amount)
+                })
+                
+        except PairedInvestment.DoesNotExist:
             return Response({
-                'success': True,
-                'message': 'Payment confirmed and investment started countdown',
-                'all_confirmed': True,
-                'mature_at': new_investment.mature_at
-            })
-        else:
+                'error': 'Invalid payment or payment already confirmed'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
             return Response({
-                'success': True,
-                'message': 'Payment confirmed but waiting for all payments and remaining amount to be cleared',
-                'all_confirmed': False,
-                'remaining_amount': str(new_investment.remn_amount)
-            })
-            
-    except PairedInvestment.DoesNotExist:
-        return Response({
-            'error': 'Invalid payment or payment already confirmed'
-        }, status=status.HTTP_404_NOT_FOUND)
-    except Exception as e:
-        return Response({
-            'error': f'Failed to confirm payment: {str(e)}'
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                'error': f'Failed to confirm payment: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class InvestmentStatementPDFView(APIView):
     permission_classes = [IsAuthenticated]
@@ -799,6 +731,12 @@ class CustomLogoutView(LogoutView):
 @permission_classes([IsAuthenticated])
 def system_overview(request):
     """Get comprehensive system overview data"""
+    # Check if user is admin
+    if not request.user.is_staff:
+        return Response({
+            'error': 'Only admin users can access this endpoint'
+        }, status=status.HTTP_403_FORBIDDEN)
+
     # User Statistics
     total_users = User.objects.count()
     
@@ -812,20 +750,23 @@ def system_overview(request):
         total_amount=Sum('amount'),
         avg_amount=Avg('amount')
     )
-    
-    # Payment Statistics
-    payments = Payment.objects.all()
-    payment_stats = payments.aggregate(
-        total_count=Count('id'),
-        total_amount=Sum('amount'),
-        avg_amount=Avg('amount')
+
+    # Calculate matured investments total using return_amount
+    matured_investments = investments.filter(status='matured').aggregate(
+        total_amount=Sum('return_amount'),
+        count=Count('id')
     )
-    
-    # Queue Statistics
-    queue_stats = Queue.objects.aggregate(
-        total_count=Count('id'),
-        total_amount=Sum('amount_remaining'),
-        avg_amount=Avg('amount_remaining')
+
+    # Calculate waiting investors (completed status) using return_amount
+    waiting_investors = investments.filter(status='completed').aggregate(
+        total_amount=Sum('return_amount'),
+        count=Count('id')
+    )
+
+    # Calculate new investors pending investments using amount
+    new_investors_pending = investments.filter(status='pending').aggregate(
+        total_amount=Sum('amount'),
+        count=Count('id')
     )
     
     # User Investment Details
@@ -837,46 +778,22 @@ def system_overview(request):
                 'username': user.username,
                 'phone_number': user.phone_number,
                 'total_investments': user_investments.count(),
-                'investments_by_status': {},
-                'payments': {
-                    'made': {
-                        'count': 0,
-                        'total': 0
-                    },
-                    'received': {
-                        'count': 0,
-                        'total': 0
-                    }
-                }
+                'investments_by_status': {}
             }
             
             # Investment amounts by status
             for status in ['pending', 'matured', 'paired', 'completed']:
                 status_investments = user_investments.filter(status=status)
                 if status_investments.exists():
-                    total = status_investments.aggregate(total=Sum('amount'))['total']
+                    # Use return_amount for matured and completed, amount for others
+                    if status in ['matured', 'completed']:
+                        total = status_investments.aggregate(total=Sum('return_amount'))['total']
+                    else:
+                        total = status_investments.aggregate(total=Sum('amount'))['total']
                     user_data['investments_by_status'][status] = {
                         'count': status_investments.count(),
                         'total': float(total)
                     }
-            
-            # Payment details
-            payments_made = Payment.objects.filter(from_user=user)
-            payments_received = Payment.objects.filter(to_user=user)
-            
-            if payments_made.exists():
-                total_sent = payments_made.aggregate(total=Sum('amount'))['total']
-                user_data['payments']['made'] = {
-                    'count': payments_made.count(),
-                    'total': float(total_sent)
-                }
-            
-            if payments_received.exists():
-                total_received = payments_received.aggregate(total=Sum('amount'))['total']
-                user_data['payments']['received'] = {
-                    'count': payments_received.count(),
-                    'total': float(total_received)
-                }
             
             user_details.append(user_data)
     
@@ -886,17 +803,19 @@ def system_overview(request):
         },
         'investment_statistics': {
             'total_investments': total_investments,
-            'status_breakdown': list(status_counts)
-        },
-        'payment_statistics': {
-            'total_payments': payment_stats['total_count'],
-            'total_amount': float(payment_stats['total_amount']),
-            'average_amount': float(payment_stats['avg_amount'])
-        },
-        'queue_statistics': {
-            'total_entries': queue_stats['total_count'],
-            'total_amount': float(queue_stats['total_amount']),
-            'average_amount': float(queue_stats['avg_amount'])
+            'status_breakdown': list(status_counts),
+            'matured_investments': {
+                'total_amount': float(matured_investments['total_amount'] or 0),
+                'count': matured_investments['count']
+            },
+            'waiting_investors': {
+                'total_amount': float(waiting_investors['total_amount'] or 0),
+                'count': waiting_investors['count']
+            },
+            'new_investors_pending': {
+                'total_amount': float(new_investors_pending['total_amount'] or 0),
+                'count': new_investors_pending['count']
+            }
         },
         'user_details': user_details
     })
@@ -924,13 +843,25 @@ def user_dashboard(request):
         print(f"Total returns: {total_returns}")  # Debug log
 
         # Get total referral earnings from ReferralHistory
-        total_referral_earnings = ReferralHistory.objects.filter(
-            referrer=request.user,
-            status='pending'
-        ).aggregate(
-            total=Sum('bonus_earned')
-        )['total'] or 0
+        referrals = ReferralHistory.objects.filter(referrer=request.user)
+        
+        # If a referral has no investment, create a placeholder with 0 amount
+        for referral in referrals:
+            if not hasattr(referral, 'amount_invested') or referral.amount_invested is None:
+                referral.amount_invested = 0
+                referral.bonus_earned = 0
+                referral.status = 'pending'
+        
+        total_referral_earnings = referrals.aggregate(total=Sum('bonus_earned'))['total'] or 0
         print(f"Total referral earnings: {total_referral_earnings}")  # Debug log
+
+        # Get available bonus (active referrals only)
+        available_bonus = ReferralHistory.objects.filter(
+            referrer=request.user,
+            status='active',
+            payment_confirmed=True
+        ).aggregate(total=Sum('bonus_earned'))['total'] or 0
+        print(f"Available bonus: {available_bonus}")  # Debug log
 
         # Get due earnings from matured investments
         due_earnings = investments.filter(
@@ -1013,6 +944,7 @@ def user_dashboard(request):
             'statistics': {
                 'total_returns': float(total_returns),
                 'total_referral_earnings': float(total_referral_earnings),
+                'available_bonus': float(available_bonus),
                 'due_earnings': float(due_earnings),
                 'active_investments': active_investments,
                 'pending_payments': pending_payments,
@@ -1167,3 +1099,152 @@ def sell_shares(request):
             {'error': f'Failed to fetch sell shares data: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+class AuditView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'accounts/audit.html'
+
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+
+    def get(self, request, *args, **kwargs):
+        if not self.test_func():
+            return HttpResponse("You don't have permission to view this page.", status=403)
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Add any additional context data needed for the audit view
+        return context
+
+class InvestmentDetailView(generics.RetrieveAPIView):
+    """
+    View to retrieve details of a specific investment
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = InvestmentSerializer
+
+    def get_queryset(self):
+        return Investment.objects.filter(user=self.request.user)
+
+    def get_object(self):
+        obj = get_object_or_404(self.get_queryset(), pk=self.kwargs["pk"])
+        self.check_object_permissions(self.request, obj)
+        return obj
+
+class WithdrawBonusView(APIView):
+    """
+    View to handle bonus withdrawal requests
+    """
+    permission_classes = [IsAuthenticated]
+
+    @transaction.atomic
+    def post(self, request):
+        try:
+            amount = Decimal(request.data.get('amount', 0))
+            
+            # Validate amount
+            if amount <= 0:
+                return Response({
+                    'error': 'Invalid withdrawal amount'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Check if user has enough bonus balance
+            if amount > request.user.referral_earnings:
+                return Response({
+                    'error': 'Insufficient bonus balance'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Create withdrawal record
+            withdrawal = WithdrawHistory.objects.create(
+                user=request.user,
+                amount=amount,
+                status='pending'
+            )
+
+            # Update user's referral earnings
+            request.user.referral_earnings -= amount
+            request.user.save()
+
+            # Update referral history records
+            referral_histories = ReferralHistory.objects.filter(
+                referrer=request.user,
+                status='pending'
+            ).order_by('created_at')
+
+            remaining_amount = amount
+            for history in referral_histories:
+                if remaining_amount <= 0:
+                    break
+                
+                if history.bonus_earned <= remaining_amount:
+                    # Mark the entire history record as used
+                    history.status = 'used'
+                    history.used_at = timezone.now()
+                    history.save()
+                    remaining_amount -= history.bonus_earned
+                else:
+                    # Update the existing record with partial usage
+                    history.bonus_earned -= remaining_amount
+                    history.amount_invested = history.amount_invested * (history.bonus_earned / (history.bonus_earned + remaining_amount))
+                    history.save()
+                    remaining_amount = 0
+
+            return Response({
+                'message': 'Withdrawal request submitted successfully',
+                'withdrawal': WithdrawHistorySerializer(withdrawal).data
+            })
+
+        except Exception as e:
+            return Response({
+                'error': f'Failed to process withdrawal: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class WithdrawHistoryListView(generics.ListAPIView):
+    """
+    View to list withdrawal history for the authenticated user
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = WithdrawHistorySerializer
+
+    def get_queryset(self):
+        return WithdrawHistory.objects.filter(user=self.request.user)
+
+class WithdrawHistoryDetailView(generics.RetrieveAPIView):
+    """
+    View to retrieve details of a specific withdrawal
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = WithdrawHistorySerializer
+
+    def get_queryset(self):
+        return WithdrawHistory.objects.filter(user=self.request.user)
+
+class WithdrawHistoryCreateView(generics.CreateAPIView):
+    """
+    View to create a new withdrawal request
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = WithdrawHistorySerializer
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+class WithdrawHistoryUpdateView(generics.UpdateAPIView):
+    """
+    View to update a withdrawal request
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = WithdrawHistorySerializer
+
+    def get_queryset(self):
+        return WithdrawHistory.objects.filter(user=self.request.user)
+
+class WithdrawHistoryDeleteView(generics.DestroyAPIView):
+    """
+    View to delete a withdrawal request
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = WithdrawHistorySerializer
+
+    def get_queryset(self):
+        return WithdrawHistory.objects.filter(user=self.request.user)

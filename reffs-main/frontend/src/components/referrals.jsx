@@ -34,9 +34,59 @@ export default function Referrals() {
           }
         });
         
+        console.log('API Response:', response.data);
+        
         if (response.data) {
-          setReferrals(response.data.referral_history || []);
-          setReferredUsers(response.data.referred_users || []);
+          // Initialize empty arrays if data is missing
+          const referralHistory = Array.isArray(response.data.referral_history) 
+            ? response.data.referral_history 
+            : [];
+          const referredUsers = Array.isArray(response.data.referred_users) 
+            ? response.data.referred_users 
+            : [];
+          
+          // For admin users, handle the data structure differently
+          if (user?.is_staff || user?.is_superuser) {
+            // Create a map of referred users for quick lookup
+            const userMap = new Map(
+              referredUsers.map(user => [user?.id, {
+                id: user?.id,
+                username: user?.username || 'Unknown User',
+                phone_number: user?.phone_number || 'N/A',
+                date_joined: user?.date_joined || new Date().toISOString(),
+                is_active: user?.is_active || false
+              }])
+            );
+            
+            // Process referrals with the user map
+            const processedReferrals = referralHistory.map(ref => {
+              const referredUserId = ref?.referred_user?.id || ref?.referred;
+              const referredUser = userMap.get(referredUserId);
+              
+              return {
+                id: ref?.id,
+                referred: referredUserId,
+                used_at: ref?.used_at,
+                amount_invested: ref?.amount_invested,
+                bonus_earned: ref?.bonus_earned,
+                status: ref?.status,
+                referredUser: referredUser || {
+                  id: referredUserId,
+                  username: 'Unknown User',
+                  phone_number: 'N/A',
+                  date_joined: new Date().toISOString(),
+                  is_active: false
+                }
+              };
+            });
+            
+            setReferrals(processedReferrals);
+            setReferredUsers(Array.from(userMap.values()));
+          } else {
+            setReferrals(referralHistory);
+            setReferredUsers(referredUsers);
+          }
+          
           setStats({
             total_referrals: response.data.total_referrals || 0,
             total_earnings: response.data.total_earnings || 0,
@@ -45,14 +95,14 @@ export default function Referrals() {
         }
       } catch (err) {
         console.error('Error fetching referrals:', err);
-        setError('Failed to fetch referral data');
+        setError(err.response?.data?.error || 'Failed to fetch referral data');
       } finally {
         setLoading(false);
       }
     };
 
     fetchReferrals();
-  }, []);
+  }, [user]);
 
   const referralLink = user ? `${window.location.origin}/register/?ref=${user.referral_code}` : '';
 
@@ -83,18 +133,20 @@ export default function Referrals() {
   }
 
   const referralsData = referrals?.map((ref) => {
-    // Find the referred user's details from referredUsers array using the referred ID
-    const referredUser = referredUsers.find(user => user.id === ref.referred);
+    if (!ref) return null;
+    
+    // Find the referred user from the referredUsers array
+    const referredUser = referredUsers?.find(user => user?.id === ref?.referred) || null;
     
     return {
-      key: ref.id,
-      date: ref.used_at ? new Date(ref.used_at).toLocaleDateString() : 'N/A',
-      username: referredUser.username || 'Unknown',
-      amount_invested: parseFloat(ref.amount_invested || 0).toFixed(2),
-      bonus_earned: parseFloat(ref.bonus_earned || 0).toFixed(2),
-      status: ref.status || 'pending'
+      key: ref?.id || 'unknown',
+      date: ref?.used_at ? new Date(ref.used_at).toLocaleDateString() : 'N/A',
+      username: referredUser?.username || 'Unknown User',
+      amount_invested: parseFloat(ref?.amount_invested || 0).toFixed(2),
+      bonus_earned: parseFloat(ref?.bonus_earned || 0).toFixed(2),
+      status: ref?.status || 'pending'
     };
-  }) || [];
+  }).filter(Boolean) || [];
 
   // Calculate pagination
   const totalPages = Math.ceil(referralsData.length / ITEMS_PER_PAGE);

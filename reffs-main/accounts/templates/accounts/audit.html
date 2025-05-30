@@ -1,0 +1,116 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}System Audit - Referral Investment System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">System Audit Overview</h2>
+    </div>
+</div>
+
+<!-- User Statistics -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">User Statistics</h5>
+            </div>
+            <div class="card-body">
+                <h3>Total Users: {{ user_statistics.total_users }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Investment Statistics -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Investment Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">Matured Investments</h6>
+                                <h3 class="card-title">${{ investment_statistics.matured_investments.total_amount|floatformat:2 }}</h3>
+                                <p class="card-text">Count: {{ investment_statistics.matured_investments.count }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">Waiting Investors</h6>
+                                <h3 class="card-title">${{ investment_statistics.waiting_investors.total_amount|floatformat:2 }}</h3>
+                                <p class="card-text">Count: {{ investment_statistics.waiting_investors.count }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">New Investors Pending</h6>
+                                <h3 class="card-title">${{ investment_statistics.new_investors_pending.total_amount|floatformat:2 }}</h3>
+                                <p class="card-text">Count: {{ investment_statistics.new_investors_pending.count }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">Total Investments</h6>
+                                <h3 class="card-title">{{ investment_statistics.total_investments }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Details -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">User Investment Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Phone Number</th>
+                                <th>Total Investments</th>
+                                <th>Pending</th>
+                                <th>Matured</th>
+                                <th>Paired</th>
+                                <th>Completed</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in user_details %}
+                            <tr>
+                                <td>{{ user.username }}</td>
+                                <td>{{ user.phone_number }}</td>
+                                <td>{{ user.total_investments }}</td>
+                                <td>${{ user.investments_by_status.pending.total|default:"0.00"|floatformat:2 }}</td>
+                                <td>${{ user.investments_by_status.matured.total|default:"0.00"|floatformat:2 }}</td>
+                                <td>${{ user.investments_by_status.paired.total|default:"0.00"|floatformat:2 }}</td>
+                                <td>${{ user.investments_by_status.completed.total|default:"0.00"|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

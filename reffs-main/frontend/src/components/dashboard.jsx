@@ -127,17 +127,19 @@ export default function Dashboard() {
     const days = parseInt(formData.maturityPeriod) || 0
     const dailyInterest = 0.02 // 2% daily interest
     const interest = amount * dailyInterest * days
-    return amount + interest
+    const totalReturn = amount + interest
+    // Round down to 2 decimal places
+    return Math.floor(totalReturn * 100) / 100
   }
 
   // Transform API data for referrals table with null checks
-  const referralsData = dashboardData?.referral?.referral_history
+  const referralsData = dashboardData?.referral?.referrals
     ?.map(ref => ({
       date: new Date(ref.created_at).toLocaleDateString(),
-      username: ref.referred?.username || 'Unknown',
+      username: ref.referred__username || 'Unknown',
       amount_invested: formatCurrency(ref.amount_invested || 0),
       bonus_earned: formatCurrency(ref.bonus_earned || 0),
-      status: ref.amount_invested === 0 ? 'No Investment' : ref.status.charAt(0).toUpperCase() + ref.status.slice(1)
+      status: ref.status ? ref.status.charAt(0).toUpperCase() + ref.status.slice(1) : 'Pending'
     })) || []
 
   const referredUsersData = dashboardData?.referral?.referred_users
@@ -150,11 +152,11 @@ export default function Dashboard() {
 
   const referralStats = {
     total_referrals: dashboardData?.referral?.total_referrals || 0,
-    total_earnings: formatCurrency(dashboardData?.referral?.total_earnings || 0),
-    available_bonus: formatCurrency(dashboardData?.referral?.available_bonus || 0)
+    total_earnings: formatCurrency(dashboardData?.statistics?.total_referral_earnings || 0),
+    available_bonus: formatCurrency(dashboardData?.statistics?.available_bonus || 0)
   }
 
-  const totalReferralEarnings = dashboardData?.referral?.total_earnings || 0;
+  const totalReferralEarnings = dashboardData?.statistics?.total_referral_earnings || 0;
   const totalReturns = dashboardData?.statistics?.total_returns || 0;
 
   if (loading) {
@@ -197,8 +199,8 @@ export default function Dashboard() {
                     datasets: [
                       {
                         data: [
-                          parseFloat(dashboardData?.referral?.total_earnings) || 0,
-                          parseFloat(dashboardData?.referral?.available_bonus) || 0
+                          parseFloat(dashboardData?.statistics?.total_referral_earnings) || 0,
+                          parseFloat(dashboardData?.statistics?.available_bonus) || 0,
                         ],
                         backgroundColor: ['rgba(75, 192, 192, 0.6)', 'rgba(54, 162, 235, 0.6)'],
                         borderColor: ['rgba(75, 192, 192, 1)', 'rgba(54, 162, 235, 1)'],
@@ -228,52 +230,54 @@ export default function Dashboard() {
               </div>
               <div className="mt-4 text-center">
                 <p className="text-sm text-gray-600">
-                  Total  Earnings: {formatCurrency(dashboardData?.referral?.total_earnings || 0)}
+                  Total Earnings: {formatCurrency(dashboardData?.statistics?.total_referral_earnings || 0)}
                 </p>
                 <p className="text-sm text-gray-600">
-                  Available Bonus: {formatCurrency(dashboardData?.referral?.available_bonus || 0)}
+                  Available Bonus: {formatCurrency(dashboardData?.statistics?.available_bonus || 0)}
                 </p>
               </div>
             </div>
 
             {/* Investment Returns Pie Chart */}
-            <div className="w-full">
+            <div className="w-full h-[300px] mt-8 md:mt-0">
               <h3 className="text-md font-medium text-gray-700 mb-3 text-center">Loan Overview</h3>
-              <Pie
-                data={{
-                  labels: ['Total Loan lent', 'Total Loan Returns'],
-                  datasets: [
-                    {
-                      data: [
-                        dashboardData?.statistics?.total_investment || 0,
-                        dashboardData?.statistics?.total_returns || 0
-                      ],
-                      backgroundColor: ['rgba(255, 99, 132, 0.6)', 'rgba(153, 102, 255, 0.6)'],
-                      borderColor: ['rgba(255, 99, 132, 1)', 'rgba(153, 102, 255, 1)'],
-                      borderWidth: 1,
-                    },
-                  ],
-                }}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: true,
-                  plugins: {
-                    legend: {
-                      position: 'top',
-                    },
-                    tooltip: {
-                      callbacks: {
-                        label: function(context) {
-                          const label = context.label || '';
-                          const value = context.raw || 0;
-                          return `${label}: ${formatCurrency(value)}`;
+              <div className="h-[250px]">
+                <Pie
+                  data={{
+                    labels: ['Total Loan lent', 'Total Loan Returns'],
+                    datasets: [
+                      {
+                        data: [
+                          dashboardData?.statistics?.total_investment || 0,
+                          dashboardData?.statistics?.total_returns || 0
+                        ],
+                        backgroundColor: ['rgba(255, 99, 132, 0.6)', 'rgba(153, 102, 255, 0.6)'],
+                        borderColor: ['rgba(255, 99, 132, 1)', 'rgba(153, 102, 255, 1)'],
+                        borderWidth: 1,
+                      },
+                    ],
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                      legend: {
+                        position: 'top',
+                      },
+                      tooltip: {
+                        callbacks: {
+                          label: function(context) {
+                            const label = context.label || '';
+                            const value = context.raw || 0;
+                            return `${label}: ${formatCurrency(value)}`;
+                          }
                         }
                       }
-                    }
-                  },
-                }}
-              />
-              <div className="mt-4 text-center">
+                    },
+                  }}
+                />
+              </div>
+              <div className="mt-8 text-center space-y-2">
                 <p className="text-sm text-gray-600">
                   Total Loan lent: {formatCurrency(dashboardData?.statistics?.total_investment || 0)}
                 </p>

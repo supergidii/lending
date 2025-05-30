@@ -1,0 +1,2 @@
+web: gunicorn referral_system.wsgi
+worker: celery -A referral_system worker -l info --pool=solo 

@@ -69,12 +69,22 @@ const SellShares = () => {
             setLoading(true);
             const response = await api.post(`/api/confirm-payment/${investmentId}/`);
             
-            if (response.data.success) {
+            if (response.data) {
+                // Update the local state to reflect the confirmed payment
+                setInvestments(prevInvestments => 
+                    prevInvestments.map(investment => 
+                        investment.id === investmentId 
+                            ? { 
+                                ...investment, 
+                                payment_status: 'paid',
+                                status: 'confirmed',
+                                action: 'Payment Confirmed'
+                            }
+                            : investment
+                    )
+                );
+                
                 toast.success('Payment confirmed successfully');
-                await fetchInvestments();
-            } else {
-                const errorMessage = response.data.error || 'Failed to confirm payment';
-                toast.error(errorMessage);
             }
         } catch (error) {
             console.error('Error confirming payment:', error);
@@ -173,8 +183,9 @@ const SellShares = () => {
                                                     <Button
                                                         onClick={() => handleConfirmPayment(investment.id)}
                                                         className="bg-blue-600 text-white hover:bg-blue-700"
+                                                        disabled={loading}
                                                     >
-                                                        Confirm Payment
+                                                        {loading ? 'Confirming...' : 'Confirm Payment'}
                                                     </Button>
                                                 ) : (
                                                     <span className="text-gray-500">
@@ -187,7 +198,7 @@ const SellShares = () => {
                                 ) : (
                                     <TableRow>
                                         <TableCell colSpan={6} className="text-center">
-                                            No investments available for selling
+                                            No loan matches available for Trading
                                         </TableCell>
                                     </TableRow>
                                 )}
